@@ -15,8 +15,13 @@ Four different types of transcript data are provided as input to the Pathway-Tra
 
 ```
 python prepare_input_all_dims.py
+```
+```
 python mapping.py
 ```
 
 ### Training and evaluation
 After data preprocessing is complete, 'main_codes/entry,py' script can be run to train and test the Pathway-Transformer model for a particular pathway. Note that, the root dataset directory must be set in the stated script to conduct experimentation for a particular pathway.
+```
+python entry.py
+```
