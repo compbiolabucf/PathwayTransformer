@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+# Copied and modified Graphormer code.
 
 from model import Graphormer
 from data import GraphDataModule, get_dataset
