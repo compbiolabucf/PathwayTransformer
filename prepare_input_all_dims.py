@@ -49,9 +49,9 @@ cancer_subtype = 'HER2'
 
 clinical_data = clinical_info('brca_tcga_clinical_data.tsv', column_name)
 gene_exp = pd.read_excel('brca_gene_expression.xlsx', index_col=0)
-crapa = pd.read_excel('brca_short_isoform_ratio_with_pvalue.xlsx', index_col=0)
-utrapa = pd.read_excel('APAScan_result.xlsx', index_col=0)
-asquant = pd.read_excel('ASQuant_result.xlsx', index_col=0)
+crapa = pd.read_excel('brca_crapa.xlsx', index_col=0)
+utrapa = pd.read_excel('brca_utrapa.xlsx', index_col=0)
+asquant = pd.read_excel('brca_asquant.xlsx', index_col=0)
 
 
 overlap_samples = list(set(clinical_data.index.tolist()) & set(gene_exp.columns.tolist()) & set(utrapa.columns.tolist()) & set(crapa.columns.tolist()) & set(asquant.columns.tolist()))
