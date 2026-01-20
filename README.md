@@ -5,7 +5,7 @@ This repository represents a transformer based machine learning model to integra
 
 All the dependcies and libraries required to preprocess data and train the model can be installed inside a conda environment using the 'pathway_transformer.yml' script executing command:
 ```
-conda create env -f pathway_transformer.yml
+conda env create -f pathway_transformer.yml
 ```
 
 ### Data preparation
