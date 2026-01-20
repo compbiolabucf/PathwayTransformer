@@ -1,5 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+# Copied and modified Graphormer code
+
 
 from data import get_dataset
 from lr import PolynomialDecayLR
