@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+# Copied and modified Graphormer code.
 
 from collator import collator
 from wrapper import MyGraphPropPredDataset, MyPygPCQM4MDataset, MyZINCDataset
