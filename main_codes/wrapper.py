@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+# Copied and modified Graphormer code.
 
 import torch
 import numpy as np
