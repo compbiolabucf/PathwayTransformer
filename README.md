@@ -7,6 +7,10 @@ All the dependcies and libraries required to preprocess data and train the model
 ```
 conda env create -f pathway_transformer.yml
 ```
+Then, the environment should be activated using the command:
+```
+conda activate pathway_transformer
+```
 
 ### Data preparation
 All the datasets used in this project are publicly available at [Data for Pathway-Transformer](https://www.kaggle.com/datasets/sudiptobaul/data-for-pathway-transformer)
