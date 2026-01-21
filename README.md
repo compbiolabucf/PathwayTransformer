@@ -1,7 +1,7 @@
 This repository represents a transformer based machine learning model to integrate different transcript variants such as- alternative splicing, alternative polyadenylation with gene expression from the same RNA-seq data. It also encodes structural properties from biological pathway networks.
 
 ## Workflow
-![alt text](https://github.com/compbiolabucf/PathwayTransformer/blob/main/pathwayTransformer.png)
+![alt text](https://github.com/compbiolabucf/PathwayTransformer/blob/main/pathway_transformer.png)
 
 Please download and navigate to the main directory of this repository before executing any command. All the dependcies and libraries required to preprocess data and train the model can be installed inside a conda environment using the 'pathway_transformer.yml' script by executing the following command (it will take a while):
 ```
