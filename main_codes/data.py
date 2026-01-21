@@ -1,21 +1,41 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-# Copied and modified Graphormer code.
+# Copied and modified from Graphormer (https://github.com/microsoft/Graphormer)
+
 
 from collator import collator
-from wrapper import MyGraphPropPredDataset, MyPygPCQM4MDataset, MyZINCDataset
-
+from wrapper import MyGraphPropPredDataset
+import pandas as pd
 from pytorch_lightning import LightningDataModule
 import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
+import os
 import ogb
 import ogb.lsc
-import ogb.graphproppred
+from ogb.graphproppred import Evaluator
 from functools import partial
 
 
 dataset = None
+
+
+### Evaluator for graph classification
+class eval(Evaluator):
+    def __init__(self, name):
+        self.name = name
+
+        meta_info = pd.read_csv(os.path.join(os.path.dirname(__file__),'meta_info.csv'), index_col = 0)
+        if not self.name in meta_info:
+            print(self.name)
+            error_mssg = 'Invalid dataset name {}.\n'.format(self.name)
+            error_mssg += 'Available datasets are as follows:\n'
+            error_mssg += '\n'.join(meta_info.keys())
+            raise ValueError(error_mssg)
+
+        self.num_tasks = int(meta_info[self.name]['num tasks'])
+        self.eval_metric = meta_info[self.name]['eval metric']
+
 
 
 def get_dataset(dataset_name='abaaba'):
@@ -23,64 +43,16 @@ def get_dataset(dataset_name='abaaba'):
     if dataset is not None:
         return dataset
 
-    # max_node is set to max(max(num_val_graph_nodes), max(num_test_graph_nodes))
-    if dataset_name == 'ogbg-molpcba':
-        dataset = {
-            'num_class': 128,
-            'loss_fn': F.binary_cross_entropy_with_logits,
-            'metric': 'ap',
-            'metric_mode': 'max',
-            'evaluator': ogb.graphproppred.Evaluator('ogbg-molpcba'),
-            'dataset': MyGraphPropPredDataset('ogbg-molpcba', root='../../dataset'),
-            'max_node': 128,
-        }
-    elif dataset_name == 'ogbg-molhiv':
-        dataset = {
-            'num_class': 1,
-            'loss_fn': F.binary_cross_entropy_with_logits,
-            'metric': 'rocauc',
-            'metric_mode': 'max',
-            'evaluator': ogb.graphproppred.Evaluator('ogbg-molhiv'),
-            'dataset': MyGraphPropPredDataset('ogbg-molhiv', root='../../dataset'),
-            'max_node': 128,
-        }
+    dataset = {
+        'num_class': 1,
+        'loss_fn': F.binary_cross_entropy_with_logits,
+        'metric': 'rocauc',
+        'metric_mode': 'max',
+        'evaluator': eval('ogbg_mol_breast_cancer'),
+        'dataset': MyGraphPropPredDataset('ogbg_mol_breast_cancer', root='dataset'),
+        'max_node': 512,
+    }
 
-    elif dataset_name == 'ogbg_mol_breast_cancer':
-        dataset = {
-            'num_class': 1,
-            'loss_fn': F.binary_cross_entropy_with_logits,
-            'metric': 'rocauc',
-            'metric_mode': 'max',
-            'evaluator': ogb.graphproppred.Evaluator('ogbg_mol_breast_cancer'),
-            'dataset': MyGraphPropPredDataset('ogbg_mol_breast_cancer', root='../../dataset'),
-            'max_node': 512,
-        }
-
-
-    elif dataset_name == 'PCQM4M-LSC':
-        dataset = {
-            'num_class': 1,
-            'loss_fn': F.l1_loss,
-            'metric': 'mae',
-            'metric_mode': 'min',
-            'evaluator': ogb.lsc.PCQM4MEvaluator(),
-            'dataset': MyPygPCQM4MDataset(root='../../dataset'),
-            'max_node': 128,
-        }
-    elif dataset_name == 'ZINC':
-        dataset = {
-            'num_class': 1,
-            'loss_fn': F.l1_loss,
-            'metric': 'mae',
-            'metric_mode': 'min',
-            'evaluator': ogb.lsc.PCQM4MEvaluator(),  # same objective function, so reuse it
-            'train_dataset': MyZINCDataset(subset=True, root='../../dataset/pyg_zinc', split='train'),
-            'valid_dataset': MyZINCDataset(subset=True, root='../../dataset/pyg_zinc', split='val'),
-            'test_dataset': MyZINCDataset(subset=True, root='../../dataset/pyg_zinc', split='test'),
-            'max_node': 128,
-        }
-    else:
-        raise NotImplementedError
 
     print(f' > {dataset_name} loaded!')
     print(dataset)

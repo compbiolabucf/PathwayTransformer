@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-# Copied and modified Graphormer code.
+# Copied and modified from Graphormer (https://github.com/microsoft/Graphormer)
+
 
 import torch
 import numpy as np
@@ -8,6 +9,10 @@ import torch_geometric.datasets
 from ogb.graphproppred import PygGraphPropPredDataset
 from ogb.lsc import PygPCQM4MDataset
 import pyximport
+import os
+import os.path as osp
+import pandas as pd
+
 
 pyximport.install(setup_args={'include_dirs': np.get_include()})
 import algos
@@ -57,43 +62,48 @@ def preprocess_item(item):
 
 
 class MyGraphPropPredDataset(PygGraphPropPredDataset):
-    #def download(self):
-    #    super(MyGraphPropPredDataset, self).download()
+    def __init__(self, name, root = 'dataset', transform=None, pre_transform = None, meta_dict = None):
+
+        self.name = name ## original name, e.g., ogbg-molhiv
+        
+        if meta_dict is None:
+            self.dir_name = '_'.join(name.split('-')) 
+            
+            if osp.exists(osp.join(root, self.dir_name + '_pyg')):
+                self.dir_name = self.dir_name + '_pyg'
+
+            self.original_root = root
+            self.root = osp.join(root, self.dir_name)
+            
+            master = pd.read_csv(os.path.join(os.path.dirname(__file__), 'meta_info.csv'), index_col = 0)
+            if not self.name in master:
+                error_mssg = 'Invalid dataset name {}.\n'.format(self.name)
+                error_mssg += 'Available datasets are as follows:\n'
+                error_mssg += '\n'.join(master.keys())
+                raise ValueError(error_mssg)
+            self.meta_info = master[self.name]
+            
+        else:
+            self.dir_name = meta_dict['dir_path']
+            self.original_root = ''
+            self.root = meta_dict['dir_path']
+            self.meta_info = meta_dict
+        
+
+        self.download_name = self.meta_info['download_name'] ## name of downloaded file, e.g., tox21
+
+        self.num_tasks = int(self.meta_info['num tasks'])
+        self.eval_metric = self.meta_info['eval metric']
+        self.task_type = self.meta_info['task type']
+        self.__num_classes__ = int(self.meta_info['num classes'])
+        self.binary = self.meta_info['binary'] == 'True'
+
+        super(PygGraphPropPredDataset, self).__init__(self.root, transform, pre_transform)
+
+        self.data, self.slices = torch.load(self.processed_paths[0])
 
     def process(self):
         super(MyGraphPropPredDataset, self).process()
-
-    def __getitem__(self, idx):
-        if isinstance(idx, int):
-            item = self.get(self.indices()[idx])
-            item.idx = idx
-            return preprocess_item(item)
-        else:
-            return self.index_select(idx)
-
-
-class MyPygPCQM4MDataset(PygPCQM4MDataset):
-    def download(self):
-        super(MyPygPCQM4MDataset, self).download()
-
-    def process(self):
-        super(MyPygPCQM4MDataset, self).process()
-
-    def __getitem__(self, idx):
-        if isinstance(idx, int):
-            item = self.get(self.indices()[idx])
-            item.idx = idx
-            return preprocess_item(item)
-        else:
-            return self.index_select(idx)
-
-
-class MyZINCDataset(torch_geometric.datasets.ZINC):
-    def download(self):
-        super(MyZINCDataset, self).download()
-
-    def process(self):
-        super(MyZINCDataset, self).process()
 
     def __getitem__(self, idx):
         if isinstance(idx, int):

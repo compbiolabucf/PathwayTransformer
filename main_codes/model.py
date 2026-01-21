@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-# Copied and modified Graphormer code.
+# Copied and modified from Graphormer (https://github.com/microsoft/Graphormer)
 
 
 from data import get_dataset
@@ -50,46 +50,20 @@ class Graphormer(pl.LightningModule):
         self.save_hyperparameters()
 
         self.num_heads = num_heads
-        if dataset_name == 'ZINC':
-            self.atom_encoder = nn.Embedding(64, hidden_dim, padding_idx=0)
-            self.edge_encoder = nn.Embedding(64, num_heads, padding_idx=0)
-            self.edge_type = edge_type
-            if self.edge_type == 'multi_hop':
-                self.edge_dis_encoder = nn.Embedding(
-                    40 * num_heads * num_heads, 1)
-            self.spatial_pos_encoder = nn.Embedding(40, num_heads, padding_idx=0)
-            self.in_degree_encoder = nn.Embedding(
-                64, hidden_dim, padding_idx=0)
-            self.out_degree_encoder = nn.Embedding(
-                64, hidden_dim, padding_idx=0)
-        elif dataset_name == 'ogbg_mol_breast_cancer':   # hiv
-            self.atom_encoder = nn.Embedding(
-                512 * 21 + 1, hidden_dim, padding_idx=0)
-            self.edge_encoder = nn.Embedding(
-                512 * 3 + 1, num_heads, padding_idx=0)
-            self.edge_type = edge_type
-            if self.edge_type == 'multi_hop':
-                self.edge_dis_encoder = nn.Embedding(
-                    128 * num_heads * num_heads, 1)
-            self.spatial_pos_encoder = nn.Embedding(512, num_heads, padding_idx=0)
-            self.in_degree_encoder = nn.Embedding(
-                512, hidden_dim, padding_idx=0)
-            self.out_degree_encoder = nn.Embedding(
-                512, hidden_dim, padding_idx=0)
-        else:
-            self.atom_encoder = nn.Embedding(
-                512 * 9 + 1, hidden_dim, padding_idx=0)
-            self.edge_encoder = nn.Embedding(
-                512 * 3 + 1, num_heads, padding_idx=0)
-            self.edge_type = edge_type
-            if self.edge_type == 'multi_hop':
-                self.edge_dis_encoder = nn.Embedding(
-                    128 * num_heads * num_heads, 1)
-            self.spatial_pos_encoder = nn.Embedding(512, num_heads, padding_idx=0)
-            self.in_degree_encoder = nn.Embedding(
-                512, hidden_dim, padding_idx=0)
-            self.out_degree_encoder = nn.Embedding(
-                512, hidden_dim, padding_idx=0)
+        self.atom_encoder = nn.Embedding(
+            512 * 21 + 1, hidden_dim, padding_idx=0)
+        self.edge_encoder = nn.Embedding(
+            512 * 3 + 1, num_heads, padding_idx=0)
+        self.edge_type = edge_type
+        if self.edge_type == 'multi_hop':
+            self.edge_dis_encoder = nn.Embedding(
+                128 * num_heads * num_heads, 1)
+        self.spatial_pos_encoder = nn.Embedding(512, num_heads, padding_idx=0)
+        self.in_degree_encoder = nn.Embedding(
+            512, hidden_dim, padding_idx=0)
+        self.out_degree_encoder = nn.Embedding(
+            512, hidden_dim, padding_idx=0)
+
 
         self.input_dropout = nn.Dropout(intput_dropout_rate)
         encoders = [EncoderLayer(hidden_dim, ffn_dim, dropout_rate, attention_dropout_rate, num_heads)
@@ -97,11 +71,8 @@ class Graphormer(pl.LightningModule):
         self.layers = nn.ModuleList(encoders)
         self.final_ln = nn.LayerNorm(hidden_dim)
 
-        if dataset_name == 'PCQM4M-LSC':
-            self.out_proj = nn.Linear(hidden_dim, 1)
-        else:
-            self.downstream_out_proj = nn.Linear(
-                hidden_dim, get_dataset(dataset_name)['num_class'])
+        self.downstream_out_proj = nn.Linear(
+            hidden_dim, get_dataset(dataset_name)['num_class'])
 
         self.graph_token = nn.Embedding(1, hidden_dim)
         self.graph_token_virtual_distance = nn.Embedding(1, num_heads)
@@ -202,68 +173,35 @@ class Graphormer(pl.LightningModule):
     def forward(self, batched_data, perturb=None):
         output = self.transformer_forward(batched_data, perturb)
 
-        # output part
-        if self.dataset_name == 'PCQM4M-LSC':
-            # get whole graph rep
-            output = self.out_proj(output[:, 0, :])
-        else:
-            output = self.downstream_out_proj(output[:, 0, :])
+        output = self.downstream_out_proj(output[:, 0, :])
         return output
 
     def training_step(self, batched_data, batch_idx):
-        if self.dataset_name == 'ogbg-molpcba':
-            if not self.flag:
-                y_hat = self(batched_data).view(-1)
-                y_gt = batched_data.y.view(-1).float()
-                mask = ~torch.isnan(y_gt)
-                loss = self.loss_fn(y_hat[mask], y_gt[mask])
-            else:
-                y_gt = batched_data.y.view(-1).float()
-                mask = ~torch.isnan(y_gt)
 
-                def forward(perturb): return self(batched_data, perturb)
-                model_forward = (self, forward)
-                n_graph, n_node = batched_data.x.size()[:2]
-                perturb_shape = (n_graph, n_node, self.hidden_dim)
-
-                optimizer = self.optimizers()
-                optimizer.zero_grad()
-                loss, _ = flag_bounded(model_forward, perturb_shape, y_gt[mask], optimizer, batched_data.x.device, self.loss_fn,
-                                       m=self.flag_m, step_size=self.flag_step_size, mag=self.flag_mag, mask=mask)
-                self.lr_schedulers().step()
-
-        elif self.dataset_name == 'ogbg-molhiv' or self.dataset_name == 'ogbg_mol_breast_cancer':
-            if not self.flag:
-                y_hat = self(batched_data).view(-1)
-                y_gt = batched_data.y.view(-1).float()
-                loss = self.loss_fn(y_hat, y_gt)
-            else:
-                y_gt = batched_data.y.view(-1).float()
-                def forward(perturb): return self(batched_data, perturb)
-                model_forward = (self, forward)
-                n_graph, n_node = batched_data.x.size()[:2]
-                perturb_shape = (n_graph, n_node, self.hidden_dim)
-
-                optimizer = self.optimizers()
-                optimizer.zero_grad()
-                loss, _ = flag_bounded(model_forward, perturb_shape, y_gt, optimizer, batched_data.x.device, self.loss_fn,
-                                       m=self.flag_m, step_size=self.flag_step_size, mag=self.flag_mag)
-                self.lr_schedulers().step()
-        else:
+        if not self.flag:
             y_hat = self(batched_data).view(-1)
-            y_gt = batched_data.y.view(-1)
-            y_gt = y_gt.float()
+            y_gt = batched_data.y.view(-1).float()
             loss = self.loss_fn(y_hat, y_gt)
+        else:
+            y_gt = batched_data.y.view(-1).float()
+            def forward(perturb): return self(batched_data, perturb)
+            model_forward = (self, forward)
+            n_graph, n_node = batched_data.x.size()[:2]
+            perturb_shape = (n_graph, n_node, self.hidden_dim)
+
+            optimizer = self.optimizers()
+            optimizer.zero_grad()
+            loss, _ = flag_bounded(model_forward, perturb_shape, y_gt, optimizer, batched_data.x.device, self.loss_fn,
+                                    m=self.flag_m, step_size=self.flag_step_size, mag=self.flag_mag)
+            self.lr_schedulers().step()
+
         self.log('train_loss', loss, sync_dist=True)
         return loss
 
     def validation_step(self, batched_data, batch_idx):
-        if self.dataset_name in ['PCQM4M-LSC', 'ZINC']:
-            y_pred = self(batched_data).view(-1)
-            y_true = batched_data.y.view(-1)
-        else:
-            y_pred = self(batched_data)
-            y_true = batched_data.y
+
+        y_pred = self(batched_data)
+        y_true = batched_data.y
         return {
             'y_pred': y_pred,
             'y_true': y_true,
@@ -272,27 +210,19 @@ class Graphormer(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         y_pred = torch.cat([i['y_pred'] for i in outputs])
         y_true = torch.cat([i['y_true'] for i in outputs])
-        if self.dataset_name == 'ogbg-molpcba':
-            mask = ~torch.isnan(y_true)
-            loss = self.loss_fn(y_pred[mask], y_true[mask])
-            self.log('valid_ap', loss, sync_dist=True)
-        else:
-            input_dict = {"y_true": y_true, "y_pred": y_pred}
-            try:
-                self.log('valid_' + self.metric, self.evaluator.eval(input_dict)
-                         [self.metric], sync_dist=True)
-            except:
-                pass
+
+        input_dict = {"y_true": y_true, "y_pred": y_pred}
+        try:
+            self.log('valid_' + self.metric, self.evaluator.eval(input_dict)
+                        [self.metric], sync_dist=True)
+        except:
+            pass
 
     def test_step(self, batched_data, batch_idx):
-        if self.dataset_name in ['PCQM4M-LSC', 'ZINC']:
-            y_pred = self(batched_data).view(-1)
-            y_true = batched_data.y.view(-1)
-            y_emb = None
-        else:
-            y_pred = self(batched_data)
-            y_true = batched_data.y
-            y_emb = self.transformer_forward(batched_data)
+
+        y_pred = self(batched_data)
+        y_true = batched_data.y
+        y_emb = self.transformer_forward(batched_data)
         return {
             'y_pred': y_pred,
             'y_true': y_true,
@@ -303,23 +233,16 @@ class Graphormer(pl.LightningModule):
     def test_epoch_end(self, outputs):
         y_pred = torch.cat([i['y_pred'] for i in outputs])
         y_true = torch.cat([i['y_true'] for i in outputs])
-        if self.dataset_name == 'PCQM4M-LSC':
-            result = y_pred.cpu().float().numpy()
-            idx = torch.cat([i['idx'] for i in outputs])
-            # torch.save(result,f"{dirpath=args.default_root_dir}/y_pred.pt")
-            torch.save(idx, 'idx.pt')
-            exit(0)
-        elif self.dataset_name == 'ogbg-molhiv' or self.dataset_name == 'ogbg_mol_breast_cancer':
-            y_emb = torch.cat([i['y_emb'] for i in outputs])
-            result = y_emb.cpu().float().numpy()
-            idx = torch.cat([i['idx'] for i in outputs])
-            #torch.save(result, f"{self.dirpath}/y_emb.pt")
-            #torch.save(idx, f"{self.dirpath}/idx.pt")
-            #torch.save(y_true, f"{self.dirpath}/labels.pt")
-            with open('auc.txt', 'a+') as out_file:
-                out_file.write(f"model: {self.dirpath} AUC: {roc_auc_score(y_true.cpu(), y_pred.cpu())}\n")
-            out_file.close()
-            #exit(0)
+        y_emb = torch.cat([i['y_emb'] for i in outputs])
+        result = y_emb.cpu().float().numpy()
+        idx = torch.cat([i['idx'] for i in outputs])
+        #torch.save(result, f"{self.dirpath}/y_emb.pt")
+        #torch.save(idx, f"{self.dirpath}/idx.pt")
+        #torch.save(y_true, f"{self.dirpath}/labels.pt")
+        with open('auc.txt', 'a+') as out_file:
+            out_file.write(f"model: {self.dirpath} AUC: {roc_auc_score(y_true.cpu(), y_pred.cpu())}\n")
+        out_file.close()
+        #exit(0)
 
         input_dict = {"y_true": y_true, "y_pred": y_pred}
         self.log('test_' + self.metric, self.evaluator.eval(input_dict)

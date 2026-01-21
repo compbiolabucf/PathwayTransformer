@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-# Copied and modified Graphormer code.
+# Copied and modified from Graphormer (https://github.com/microsoft/Graphormer)
 
 
 import torch
