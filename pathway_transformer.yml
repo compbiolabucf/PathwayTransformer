@@ -1,7 +1,7 @@
 name: pathway_transformer
 channels:
+  - conda-forge
   - pytorch
-  - anaconda
   - defaults
 dependencies:
   - _libgcc_mutex=0.1
@@ -23,7 +23,8 @@ dependencies:
   - jpeg=9e
   - lame=3.100
   - lcms2=2.12
-  - ld_impl_linux-64=2.35.1
+  - ld_impl_linux-64>=2.36
+  - binutils>=2.36
   - libffi=3.3
   - libgcc-ng=9.1.0
   - libiconv=1.16
