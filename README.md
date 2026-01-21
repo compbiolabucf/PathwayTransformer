@@ -23,6 +23,7 @@ Then, it can be run simply by executing
 ```
 ./train_pathway.sh
 ```
+The command line will display the AUROC score on the test set after the experiment is complete. A file named 'auc.txt' will be also generated with the test AUROC score. Note that, on subsequent runs with different pathways, AUROC scores will be appended to this file. The trained model and hyperparameters used will be stored inside 'exps' and 'tmp' folders respectively. 
 
 
 ### Data preparation
