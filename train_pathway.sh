@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pathway=hsa04012
+pathway=hsa03320
 echo "pathway: ${pathway}"
 if [ -d dataset/ogbg_mol_breast_cancer ]; then 
     rm -r dataset/ogbg_mol_breast_cancer
