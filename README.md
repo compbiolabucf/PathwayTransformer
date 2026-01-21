@@ -34,4 +34,4 @@ Four different types of transcript data are provided as input to the Pathway-Tra
 ```
 python prepare_input_all_dims.py
 ```
-It will generate six different directories: 4 for the four different transcripts, 1 for combination of 'crapa' and 'gene expression', and 1 combining all the four transcripts together. Each directory contains folders for each of the 89 pathways used in this project. The dataset inside each of the six directories can be copied/moved to the 'dataset/' directory inside the main directory to be leveraged for the corresponding experiment setup. 
+It will generate six different directories: 4 for the four different transcripts, 1 for combination of 'CR-APA' and 'gene expression', and 1 combining all the four transcripts together. Each directory contains folders for each of the 89 pathways used in this project. The dataset inside each of the six directories can be copied/moved to the 'dataset/' directory inside the main directory to be leveraged for the corresponding experiment setup. 
