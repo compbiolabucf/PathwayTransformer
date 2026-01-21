@@ -3,7 +3,7 @@ This repository represents a transformer based machine learning model to integra
 ## Workflow
 ![alt text](https://github.com/compbiolabucf/PathwayTransformer/blob/main/pathwayTransformer.png)
 
-All the dependcies and libraries required to preprocess data and train the model can be installed inside a conda environment using the 'pathway_transformer.yml' script executing command:
+All the dependcies and libraries required to preprocess data and train the model can be installed inside a conda environment using the 'pathway_transformer.yml' script executing command (it will take a while):
 ```
 conda env create -f pathway_transformer.yml
 ```
@@ -11,6 +11,15 @@ Then, the environment should be activated using the command:
 ```
 conda activate pathway_transformer
 ```
+
+
+
+### Quick training and evaluation
+Processed example datasets have been provided for a few pathaways inside the [dataset](https://github.com/compbiolabucf/PathwayTransformer/blob/main/dataset) directory which can be directly downloaded for training and testing. 
+```
+python entry.py
+```
+
 
 ### Data preparation
 All the datasets used in this project are publicly available at [Data for Pathway-Transformer](https://www.kaggle.com/datasets/sudiptobaul/data-for-pathway-transformer)
@@ -22,10 +31,4 @@ python prepare_input_all_dims.py
 ```
 ```
 python mapping.py
-```
-
-### Training and evaluation
-After data preprocessing is complete, 'main_codes/entry,py' script can be run to train and test the Pathway-Transformer model for a particular pathway. Note that, the root dataset directory must be set in the stated script to conduct experimentation for a particular pathway.
-```
-python entry.py
 ```
