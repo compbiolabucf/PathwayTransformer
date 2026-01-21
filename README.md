@@ -26,14 +26,12 @@ Then, it can be run simply by executing
 The command line will display the AUROC score on the test set after the experiment is complete. A file named 'auc.txt' will be also generated with the test AUROC score. Note that, on subsequent runs with different pathways, AUROC scores will be appended to this file. The trained model and hyperparameters used will be stored inside 'exps' and 'tmp' folders respectively. 
 
 
-### Data preparation
+### Data preparation from scractch
 All the datasets used in this project are publicly available at [Data for Pathway-Transformer](https://www.kaggle.com/datasets/sudiptobaul/data-for-pathway-transformer)
 
-Four different types of transcript data are provided as input to the Pathway-Transformer framework - gene expression, CR-APA TR, UTR-APA TR, AS PSI. Clinical information is also provided for training and evaluation. The python script 'prepare_input_all_dims.py' can be used for preprocessing all the transcripts and clinical data. Each transcript's data is provided as excel file with patient samples as columns and genes as rows. The clinical data is provided as '.tsv' file with a column containing the subtype status (positive or negative) Data is prepared and assembled together for each pathway. After preprocessing the data 'mapping.py' script can be used to rename the folders to brca1, brca2, ... instead of the pathway names to be competent with the framework's code.
+Four different types of transcript data are provided as input to the Pathway-Transformer framework - gene expression, CR-APA TR, UTR-APA TR, AS PSI. Clinical information is also provided for training and evaluation. The python script 'prepare_input_all_dims.py' can be used for preprocessing all the transcripts and clinical data. Each transcript's data is provided as excel file with patient samples as columns and genes as rows. The clinical data is provided as '.tsv' file with a column containing the subtype status (positive or negative). Data is prepared and assembled together for each pathway. 
 
 ```
 python prepare_input_all_dims.py
 ```
-```
-python mapping.py
-```
+
