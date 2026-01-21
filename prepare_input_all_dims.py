@@ -44,8 +44,8 @@ def pathway_data(path):
 
 
 ## selecting the breast cancer type
-column_name = 'IHC-HER2'  #IHC-HER2, #PR status by ihc, #ER Status By IHC
-cancer_subtype = 'HER2'
+column_name = 'ER Status By IHC'  #PR status by ihc, #ER Status By IHC
+cancer_subtype = 'ER'
 
 clinical_data = clinical_info('brca_tcga_clinical_data.tsv', column_name)
 gene_exp = pd.read_excel('brca_gene_expression.xlsx', index_col=0)
