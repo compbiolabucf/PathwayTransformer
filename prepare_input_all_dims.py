@@ -43,7 +43,7 @@ def pathway_data(path):
 
 
 
-## selecting the breast cancer type
+## selecting the breast cancer status
 column_name = 'ER Status By IHC'  #PR status by ihc, #ER Status By IHC
 cancer_subtype = 'ER'
 
