@@ -3,7 +3,7 @@ This repository represents a transformer based machine learning model to integra
 ## Workflow
 ![alt text](https://github.com/compbiolabucf/PathwayTransformer/blob/main/pathwayTransformer.png)
 
-Please download and navigate to the main directory of this repository before executing any command. All the dependcies and libraries required to preprocess data and train the model can be installed inside a conda environment using the 'pathway_transformer.yml' script by executing command (it will take a while):
+Please download and navigate to the main directory of this repository before executing any command. All the dependcies and libraries required to preprocess data and train the model can be installed inside a conda environment using the 'pathway_transformer.yml' script by executing the following command (it will take a while):
 ```
 conda env create -f pathway_transformer.yml
 ```
