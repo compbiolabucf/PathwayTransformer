@@ -15,9 +15,13 @@ conda activate pathway_transformer
 
 
 ### Quick training and evaluation
-Processed example datasets have been provided for a few pathaways inside the [dataset](https://github.com/compbiolabucf/PathwayTransformer/blob/main/dataset) directory which can be directly downloaded for training and testing. 
+Processed example datasets have been provided for a few pathaways inside the [dataset](https://github.com/compbiolabucf/PathwayTransformer/blob/main/dataset) directory which can be directly downloaded for training and testing. The shell script 'train_pathway.sh' can be used to run experiment for a particular pathway. The pathway name in the first line of the script needs to be updated accordingly. All the hyperparameters for the modell can be updated inside this script as well. At first, the shell script is required to be made executable using command 
 ```
-python entry.py
+chmod u+x train_pathway.sh
+```
+Then, it can be run simply by executing
+```
+./train_pathway.sh
 ```
 
 
