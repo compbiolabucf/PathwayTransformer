@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# mv ../../dataset/ogbg_mol_breast_cancer ../../dataset/ogbg_mol_breast_cancer_old
-# for i in {1..90} # inclusive, set to number of pathways
-# do
-
 pathway=hsa04012
 echo "pathway: ${pathway}"
 if [ -d dataset/ogbg_mol_breast_cancer ]; then 
@@ -13,9 +9,9 @@ cp -r dataset/${pathway} dataset/ogbg_mol_breast_cancer
 exp_name="${pathway}-save-emb"
 [ -z "${seed}" ] && seed="1"
 [ -z "${arch}" ] && arch="--ffn_dim 512 --hidden_dim 512 --dropout_rate 0.1 --n_layers 2 --edge_type multi_hop --multi_hop_max_dist 5"
-[ -z "${batch_size}" ] && batch_size="1"         # Alternatively, you can decrease the bsz to 64 and use 2 GPUs, if you do not have 32G GPU memory.
-[ -z "${epoch}" ] && epoch="8"  ###8
-[ -z "${peak_lr}" ] && peak_lr="2e-4"  ###2
+[ -z "${batch_size}" ] && batch_size="1"       
+[ -z "${epoch}" ] && epoch="8"  
+[ -z "${peak_lr}" ] && peak_lr="2e-4"  
 [ -z "${end_lr}" ] && end_lr="1e-9"
 #[ -z "${flag_m}" ] && flag_m="2"
 #[ -z "${flag_step_size}" ] && flag_step_size="0.2"
@@ -39,7 +35,7 @@ echo "seed: ${seed}"
 echo "epoch: ${epoch}"
 # echo "==============================================================================="
 
-n_gpu=1                   # Please use 1 GPU (We use 1 32GB V100 card) to reproduce our results.
+n_gpu=1                 
 #tot_updates=$((33000*epoch/batch_size/n_gpu))
 #warmup_updates=$((tot_updates/10))
 max_epochs=$((epoch+1))
@@ -84,5 +80,3 @@ do
             --checkpoint_path $file --test --progress_bar_refresh_rate 100 --num_heads $n_heads
 done
 echo "==============================================================================="
-
-# done
