@@ -1,82 +1,178 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-pathway=hsa03320
+set -euo pipefail
+
+pathway="${pathway:-hsa04012}"
 echo "pathway: ${pathway}"
-if [ -d dataset/ogbg_mol_breast_cancer ]; then 
-    rm -r dataset/ogbg_mol_breast_cancer
+mode="${mode:-train}"
+mode="$(printf '%s' "${mode}" | tr '[:upper:]' '[:lower:]')"
+echo "mode: ${mode}"
+
+if [[ "${mode}" != "train" && "${mode}" != "test" ]]; then
+    echo "invalid mode: ${mode}" >&2
+    echo "allowed values: train test" >&2
+    exit 1
 fi
-cp -r dataset/${pathway} dataset/ogbg_mol_breast_cancer
-exp_name="${pathway}-save-emb"
-[ -z "${seed}" ] && seed="1"
-[ -z "${arch}" ] && arch="--ffn_dim 512 --hidden_dim 512 --dropout_rate 0.1 --n_layers 2 --edge_type multi_hop --multi_hop_max_dist 5"
-[ -z "${batch_size}" ] && batch_size="1"       
-[ -z "${epoch}" ] && epoch="8"  
-[ -z "${peak_lr}" ] && peak_lr="2e-4"  
-[ -z "${end_lr}" ] && end_lr="1e-9"
-#[ -z "${flag_m}" ] && flag_m="2"
-#[ -z "${flag_step_size}" ] && flag_step_size="0.2"
-#[ -z "${flag_mag}" ] && flag_mag="0"
 
-[ -z "${ckpt_path}" ] && ckpt_path=""
+dataset_variant="${dataset_variant:-}"
+valid_dataset_variants=(
+    "brca_data1_as"
+    "brca_data1_crapa"
+    "brca_data1_gene"
+    "brca_data1_utrapa"
+    "brca_data2"
+    "brca_data4"
+)
 
-# echo -e "\n\n"
-echo "=====================================ARGS======================================"
-echo "arg0: $0"
-echo "exp_name: ${exp_name}"
-echo "ckpt_path ${ckpt_path}"
-echo "arch: ${arch}"
-echo "batch_size: ${batch_size}"
-echo "peak_lr ${peak_lr}"
-echo "end_lr ${end_lr}"
-#echo "flag_m ${flag_m}"
-#echo "flag_step_size :${flag_step_size}"
-#echo "flag_mag: ${flag_mag}"
-echo "seed: ${seed}"
-echo "epoch: ${epoch}"
-# echo "==============================================================================="
+if [[ -z "${dataset_variant}" ]]; then
+    echo "Select dataset variant:"
+    select selected_variant in "${valid_dataset_variants[@]}"; do
+        if [[ -n "${selected_variant}" ]]; then
+            dataset_variant="${selected_variant}"
+            break
+        fi
+        echo "Invalid selection. Choose one of the listed dataset variants."
+    done
+fi
 
-n_gpu=1                 
-#tot_updates=$((33000*epoch/batch_size/n_gpu))
-#warmup_updates=$((tot_updates/10))
-max_epochs=$((epoch+1))
-# echo "=====================================ARGS======================================"
-#echo "tot_updates ${tot_updates}"
-#echo "warmup_updates: ${warmup_updates}"
-echo "max_epochs: ${max_epochs}"
-echo "==============================================================================="
+if [[ ! " ${valid_dataset_variants[*]} " =~ [[:space:]]${dataset_variant}[[:space:]] ]]; then
+    echo "invalid dataset_variant: ${dataset_variant}" >&2
+    echo "allowed values: ${valid_dataset_variants[*]}" >&2
+    exit 1
+fi
 
-default_root_dir=exps/brca/$exp_name/$seed
-n_heads=16
-mkdir -p $default_root_dir
+dataset_root="${dataset_root:-processed_data/${dataset_variant}}"
+source_dataset="${dataset_root}/${pathway}"
+target_dataset="${dataset_root}/ogbg_mol_breast_cancer"
+if [[ ! -d "${source_dataset}" ]]; then
+    echo "dataset not found: ${source_dataset}" >&2
+    exit 1
+fi
 
-tmp_dir=tmp/$exp_name
-mkdir -p $tmp_dir
+rm -rf "${target_dataset}"
+cp -r "${source_dataset}" "${target_dataset}"
 
-python main_codes/entry.py --num_workers 4 --seed $seed --batch_size $batch_size \
-    --dataset_name ogbg_mol_breast_cancer \
-    --gpus 1 --accelerator ddp --precision 16 $arch \
-    --default_root_dir $default_root_dir \
-    --max_epochs $max_epochs --num_heads $n_heads \
-    --peak_lr $peak_lr --end_lr $end_lr --progress_bar_refresh_rate 10 \
-    
+exp_name="${exp_name:-${pathway}-save-emb}"
+seed="${seed:-1}"
+arch="${arch:---ffn_dim 512 --hidden_dim 512 --dropout_rate 0.1 --n_layers 2 --edge_type multi_hop --multi_hop_max_dist 5}"
+batch_size="${batch_size:-1}"
+epoch="${epoch:-100}"
+peak_lr="${peak_lr:-2e-4}"
+end_lr="${end_lr:-1e-9}"
+accelerator="${accelerator:-auto}"
+devices="${devices:-1}"
+strategy="${strategy:-auto}"
+precision="${precision:-16-mixed}"
+n_heads="${n_heads:-16}"
+early_stopping_patience="${early_stopping_patience:-5}"
+early_stopping="${early_stopping:-True}"
+early_stopping_lower="$(printf '%s' "${early_stopping}" | tr '[:upper:]' '[:lower:]')"
 
-checkpoint_dir=$default_root_dir/lightning_logs/checkpoints/
-echo "=====================================EVAL======================================"
-for file in `ls $checkpoint_dir/last.ckpt`
-do
-    echo -e "\n\n\n ckpt:"
-    echo "$file"
-    echo -e "\n\n\n"
-    python main_codes/entry.py --num_workers 4 --seed $seed --batch_size $batch_size \
-            --dataset_name ogbg_mol_breast_cancer \
-            --gpus 1 --accelerator ddp --precision 16 $arch \
-            --default_root_dir $tmp_dir/ \
-            --checkpoint_path $file --validate --progress_bar_refresh_rate 100 --num_heads $n_heads
+max_epochs=$((epoch + 1))
+default_root_dir="exps/brca/${exp_name}/${seed}"
+tmp_dir="tmp/${exp_name}"
+mkdir -p "${default_root_dir}" "${tmp_dir}"
 
-    python main_codes/entry.py --num_workers 4 --seed $seed --batch_size $batch_size \
-            --dataset_name ogbg_mol_breast_cancer \
-            --gpus 1 --accelerator ddp --precision 16 $arch \
-            --default_root_dir $tmp_dir/ \
-            --checkpoint_path $file --test --progress_bar_refresh_rate 100 --num_heads $n_heads
-done
-echo "==============================================================================="
+early_stopping_arg="--enable_early_stopping"
+checkpoint_name="best-val-loss.ckpt"
+if [[ "${early_stopping_lower}" == "false" ]]; then
+    early_stopping_arg="--disable_early_stopping"
+    checkpoint_name="last.ckpt"
+fi
+
+checkpoint_dir="${default_root_dir}/lightning_logs/checkpoints"
+
+resolve_checkpoint_path() {
+    local preferred_file="${checkpoint_dir}/best-val-loss.ckpt"
+    local fallback_file="${checkpoint_dir}/last.ckpt"
+
+    if [[ -e "${preferred_file}" ]]; then
+        printf '%s\n' "${preferred_file}"
+        return 0
+    fi
+    if [[ -e "${fallback_file}" ]]; then
+        printf '%s\n' "${fallback_file}"
+        return 0
+    fi
+    return 1
+}
+
+run_validation_and_test() {
+    local checkpoint_file="$1"
+
+    echo "loading checkpoint for validation: ${checkpoint_file}"
+    python "updated_codes/PT_train_test.py" \
+        --num_workers 4 \
+        --seed "${seed}" \
+        --batch_size "${batch_size}" \
+        --dataset_name ogbg_mol_breast_cancer \
+        --dataset_root "${dataset_root}" \
+        --accelerator "${accelerator}" \
+        --devices "${devices}" \
+        --strategy "${strategy}" \
+        --precision "${precision}" \
+        --default_root_dir "${tmp_dir}" \
+        --checkpoint_path "${checkpoint_file}" \
+        --validate \
+        --early_stopping_patience "${early_stopping_patience}" \
+        ${early_stopping_arg} \
+        --log_every_n_steps 100 \
+        --num_heads "${n_heads}" \
+        ${arch}
+
+    echo "loading checkpoint for testing: ${checkpoint_file}"
+    python "updated_codes/PT_train_test.py" \
+        --num_workers 4 \
+        --seed "${seed}" \
+        --batch_size "${batch_size}" \
+        --dataset_name ogbg_mol_breast_cancer \
+        --dataset_root "${dataset_root}" \
+        --accelerator "${accelerator}" \
+        --devices "${devices}" \
+        --strategy "${strategy}" \
+        --precision "${precision}" \
+        --default_root_dir "${tmp_dir}" \
+        --checkpoint_path "${checkpoint_file}" \
+        --test \
+        --early_stopping_patience "${early_stopping_patience}" \
+        ${early_stopping_arg} \
+        --log_every_n_steps 100 \
+        --num_heads "${n_heads}" \
+        ${arch}
+}
+
+if [[ "${mode}" == "train" ]]; then
+    python "updated_codes/PT_train_test.py" \
+        --num_workers 4 \
+        --seed "${seed}" \
+        --batch_size "${batch_size}" \
+        --dataset_name ogbg_mol_breast_cancer \
+        --dataset_root "${dataset_root}" \
+        --accelerator "${accelerator}" \
+        --devices "${devices}" \
+        --strategy "${strategy}" \
+        --precision "${precision}" \
+        --default_root_dir "${default_root_dir}" \
+        --max_epochs "${max_epochs}" \
+        --early_stopping_patience "${early_stopping_patience}" \
+        ${early_stopping_arg} \
+        --num_heads "${n_heads}" \
+        --peak_lr "${peak_lr}" \
+        --end_lr "${end_lr}" \
+        --log_every_n_steps 10 \
+        ${arch}
+
+    checkpoint_file="${checkpoint_dir}/${checkpoint_name}"
+    if [[ -e "${checkpoint_file}" ]]; then
+        run_validation_and_test "${checkpoint_file}"
+    else
+        echo "train the model first for this pathway and input data"
+    fi
+else
+    if checkpoint_file="$(resolve_checkpoint_path)"; then
+        echo "loading checkpoint from: ${checkpoint_file}"
+        run_validation_and_test "${checkpoint_file}"
+    else
+        echo "train the model first for this pathway and input data using train mode"
+    fi
+fi
