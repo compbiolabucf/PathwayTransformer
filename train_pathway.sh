@@ -101,7 +101,7 @@ run_validation_and_test() {
     local checkpoint_file="$1"
 
     echo "loading checkpoint for validation: ${checkpoint_file}"
-    python "updated_codes/PT_train_test.py" \
+    python "main_codes/PT_train_test.py" \
         --num_workers 4 \
         --seed "${seed}" \
         --batch_size "${batch_size}" \
@@ -121,7 +121,7 @@ run_validation_and_test() {
         ${arch}
 
     echo "loading checkpoint for testing: ${checkpoint_file}"
-    python "updated_codes/PT_train_test.py" \
+    python "main_codes/PT_train_test.py" \
         --num_workers 4 \
         --seed "${seed}" \
         --batch_size "${batch_size}" \
@@ -142,7 +142,7 @@ run_validation_and_test() {
 }
 
 if [[ "${mode}" == "train" ]]; then
-    python "updated_codes/PT_train_test.py" \
+    python "main_codes/PT_train_test.py" \
         --num_workers 4 \
         --seed "${seed}" \
         --batch_size "${batch_size}" \
