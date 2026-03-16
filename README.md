@@ -23,15 +23,15 @@ Then, it can be run simply by executing
 ```
 bash train_pathway.sh
 ```
-The command line will display the AUROC score on the test set after the experiment is complete. A file named 'auc.txt' will be also generated with the test AUROC score. Note that, on subsequent runs with different pathways, AUROC scores will be appended to this file. The trained model and hyperparameters used will be stored inside 'exps' and 'tmp' folders respectively. 
+The command line will display the AUROC score on the test set after the experiment is complete. A file named 'auroc.txt' will be also generated with the test AUROC score. Note that, on subsequent runs with different pathways, AUROC scores will be appended to this file. The trained model and hyperparameters used will be stored inside 'exps' and 'tmp' folders respectively. 
 
 
 ### Data preparation from scratch
 All the datasets used in this project are publicly available at [Data for Pathway-Transformer](https://www.kaggle.com/datasets/sudiptobaul/data-for-pathway-transformer)
 
-Four different types of transcript data are provided as input to the Pathway-Transformer framework - gene expression, CR-APA TR, UTR-APA TR, AS PSI. Clinical information is also provided for training and evaluation. The python script 'prepare_input_all_dims.py' can be used for preprocessing all the transcripts and clinical data. Subtype status name and file/directory names (if needed) can be updated inside the python script. Each transcript's data is provided as excel file with patient samples as columns and genes as rows. The clinical data is provided as '.tsv' file with a column containing the subtype status (positive or negative). Data is prepared and assembled together for each pathway. 
+Four different types of transcript data are provided as input to the Pathway-Transformer framework - gene expression, CR-APA TR, UTR-APA TR, AS PSI. Clinical information is also provided for training and evaluation. The python script 'prepare_input_all_dims.py' can be used for preprocessing all the transcripts and clinical data. Subtype status name and file/directory names of inputs and outputs (if needed) can be updated inside the python script or as command line argument. Each transcript's data is provided as excel file with patient samples as columns and genes as rows. The clinical data is provided as '.tsv' file with a column containing the subtype status (positive or negative). Data is prepared and assembled together for each pathway. 
 
 ```
 python prepare_input_all_dims.py
 ```
-It will generate six different directories: 4 for the four different transcripts, 1 for combination of 'CR-APA' and 'gene expression', and 1 combining all the four transcripts together. Each directory contains folders for each of the 89 pathways used in this project. The dataset inside each of the six directories can be copied/moved to the 'dataset/' directory inside the main directory to be leveraged for the corresponding experiment setup. 
+It will generate six different directories inside 'processed_data' directory: 4 for the four different transcripts, 1 for combination of crapa and gene expression, and 1 combining all the four transcripts together. Each directory contains folders for each of the 89 pathways used in this project. This data can be directly used for each of the experimental setups: crapa only, gene expression only, combination of crapa and gene expression, combination of all 4 transcripts.
