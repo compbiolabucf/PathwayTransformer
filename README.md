@@ -23,7 +23,7 @@ Then, it can be run simply by executing
 ```
 pathway=hsa04012 bash train_pathway.sh
 ```
-The command line will display the AUROC score on the test set after the experiment is complete. A file named 'auroc.txt' will be also generated with the test AUROC score. Note that, on subsequent runs with different pathways, AUROC scores will be appended to this file. The trained model and hyperparameters used will be stored inside 'exps' and 'tmp' folders respectively. 
+The command line will display the AUROC score on the test set after the experiment is complete. A file named 'auroc.txt' will be also generated inside 'tmp/<pathway_name>' folder with the test AUROC score. The trained model used will be stored inside 'exps' folder. Note that, if there is already a trained model for a particular pathway inside 'exps' folder, it will always load the trained model. For training the model from scratch, the particular model directory corresponding to a pathway should be removed.
 
 
 ### Data preparation from scratch
