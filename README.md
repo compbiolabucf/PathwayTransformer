@@ -27,11 +27,11 @@ The command line will display the AUROC score on the test set after the experime
 
 
 ### Data preparation from scratch
-All the datasets used in this project are publicly available at [Data for Pathway-Transformer](https://www.kaggle.com/datasets/sudiptobaul/data-for-pathway-transformer)
+All the datasets used in this project are publicly available at [Data for Pathway-Transformer](https://www.kaggle.com/datasets/sudiptobaul/data-for-pathway-transformer). The data should be downloaded and stored in 'raw_data' folder inside the main directory.
 
 Four different types of transcript data are provided as input to the Pathway-Transformer framework - gene expression, CR-APA TR, UTR-APA TR, AS PSI. Clinical information is also provided for training and evaluation. The python script 'prepare_input_all_dims.py' can be used for preprocessing all the transcripts and clinical data. Subtype status name and file/directory names of inputs and outputs (if needed) can be updated inside the python script or as command line argument. Each transcript's data is provided as excel file with patient samples as columns and genes as rows. The clinical data is provided as '.tsv' file with a column containing the subtype status (positive or negative). Data is prepared and assembled together for each pathway. 
 
 ```
-python prepare_input_all_dims.py
+python prepare_input_all_dims.py --cancer_subtype ER --input_dir raw_data --output_dir processed_data
 ```
 It will generate six different directories inside 'processed_data' directory: 4 for the four different transcripts, 1 for combination of crapa and gene expression, and 1 combining all the four transcripts together. Each directory contains folders for each of the 89 pathways used in this project. This data can be directly used for each of the experimental setups: crapa only, gene expression only, combination of crapa and gene expression, combination of all 4 transcripts.
