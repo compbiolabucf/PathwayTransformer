@@ -15,13 +15,13 @@ conda activate pathway_transformer
 
 
 ### Quick training and evaluation
-Processed example datasets containing features from all the four transcript variants have been provided for a few pathaways (ER status) inside the [processed_data](processed_data) directory which can be directly downloaded for training and testing. The shell script 'train_pathway.sh' can be used to run experiment for a particular pathway. The pathway name can be passed as an argument or needs to be updated at the top of the script accordingly. All the hyperparameters for the modell can be updated inside this script as well. At first, the shell script is required to be made executable using command 
+Processed example datasets containing features from all the four transcript variants have been provided for a few pathaways (ER status) inside the [processed_data](processed_data) directory which can be directly downloaded for training and testing. The shell script 'train_pathway.sh' can be used to run experiment for a particular pathway. The pathway name can be passed as an argument or needs to be updated at the top of the script accordingly. While executing the command it will ask to choose the dataset variant. For these example datasets option '6) brca_data4' should be selected. The pther experiemental settings can be also executed using the data for that particular setting. All the hyperparameters for the modell can be updated inside this script as well. At first, the shell script is required to be made executable using command 
 ```
 chmod u+x train_pathway.sh
 ```
 Then, it can be run simply by executing
 ```
-bash train_pathway.sh
+pathway=hsa04012 bash train_pathway.sh
 ```
 The command line will display the AUROC score on the test set after the experiment is complete. A file named 'auroc.txt' will be also generated with the test AUROC score. Note that, on subsequent runs with different pathways, AUROC scores will be appended to this file. The trained model and hyperparameters used will be stored inside 'exps' and 'tmp' folders respectively. 
 
