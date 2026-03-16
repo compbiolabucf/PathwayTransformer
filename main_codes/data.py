@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import io
 import os
 from contextlib import redirect_stderr, redirect_stdout
