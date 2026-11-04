@@ -5,6 +5,8 @@ breast cancers. It integrates four transcript-level features from the same RNA-s
 transcript ratio, UTR-APA transcript ratio and alternative-splicing PSI. It also encodes the structure of KEGG
 pathway networks.
 
+![https://github.com/compbiolabucf/PathwayTransformer/blob/main/pathway_transformer.png](pathway_transformer.png)
+
 One model is trained per KEGG pathway, with every gene of the pathway as a token:
 
 * **Gene feature encoding.** A gene's token is `b_g + sum_c z_gc * w_gc`, summed over its feature channels `c`.
